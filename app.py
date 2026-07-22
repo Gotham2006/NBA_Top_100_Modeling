@@ -379,7 +379,7 @@ with tab4:
     
     try:
         # Dynamically load the generated CSV (Adjust the file path if your CSV is in a specific folder like 'NLP_Model/')
-        df_nlp = pd.read_csv("nlp_model_scores_ranked.csv")
+        df_nlp = pd.read_csv("NLP_Model/nlp_model_scores_ranked.csv")
         
         # Display the dataframe with clean column formatting for your new specific metrics
         st.dataframe(
