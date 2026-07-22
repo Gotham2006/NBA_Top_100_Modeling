@@ -374,29 +374,44 @@ with tab4:
 
     st.divider()
 
-    # 2. Data Loading & Display Table
-    st.subheader("Model Scores by Player")
+    # 2. Hardcoded Data Definition (Top 20 Consensus Players via RoBERTa Metrics)
+    nlp_data = {
+        "Player_Name": [
+            "Michael Jordan", "LeBron James", "Kareem Abdul-Jabbar", "Bill Russell", 
+            "Magic Johnson", "Wilt Chamberlain", "Shaquille O'Neal", "Tim Duncan", 
+            "Larry Bird", "Kobe Bryant", "Hakeem Olajuwon", "Stephen Curry", 
+            "Oscar Robertson", "Kevin Durant", "Julius Erving", "Jerry West", 
+            "Karl Malone", "Kevin Garnett", "Moses Malone", "Dirk Nowitzki"
+        ],
+        "Model_Score": [
+            1.458, 2.746, 1.409, 1.702, 
+            1.635, 1.990, 1.755, 1.546, 
+            1.442, 1.110, 0.554, 2.238, 
+            1.761, 1.904, 1.905, 1.190, 
+            0.709, 1.344, 2.090, 1.638
+        ]
+    }
     
-    try:
-        # Dynamically load the generated CSV (Adjust the file path if your CSV is in a specific folder like 'NLP_Model/')
-        df_nlp = pd.read_csv("NLP_Model/nlp_model_scores_ranked.csv")
-        
-        # Display the dataframe with clean column formatting for your new specific metrics
-        st.dataframe(
-            df_nlp, 
-            use_container_width=True, 
-            hide_index=True,
-            column_config={
-                "Overall_NLP_Score": st.column_config.NumberColumn("Net Score", format="%.3f"),
-                "Respect_Score": st.column_config.NumberColumn("Respect", format="%.2f"),
-                "Failings_Score": st.column_config.NumberColumn("Failings", format="%.2f"),
-                "Positive_Attitude_Score": st.column_config.NumberColumn("Positive", format="%.2f"),
-                "Negative_Attitude_Score": st.column_config.NumberColumn("Negative", format="%.2f"),
-                "Context_Length": st.column_config.NumberColumn("Text Length")
-            }
-        )
-    except FileNotFoundError:
-        st.error("⚠️ 'nlp_model_scores_ranked.csv' not found. Please ensure the path is correct and the file is pushed to GitHub.")
+    df_nlp = pd.DataFrame(nlp_data)
+    
+    # Sort values descending by the net score so the best narrative leads
+    df_nlp_sorted = df_nlp.sort_values(by="Model_Score", ascending=False).reset_index(drop=True)
+    
+    # Dynamically inject the correct rank based on the sorted order
+    df_nlp_sorted.insert(0, "Rank", df_nlp_sorted.index + 1)
+    
+    # 3. Display Table
+    st.subheader("Top 20 Consensus Players Narrative Scores")
+    st.dataframe(
+        df_nlp_sorted, 
+        use_container_width=True, 
+        hide_index=True,
+        column_config={
+            "Rank": st.column_config.NumberColumn("Rank"),
+            "Player_Name": st.column_config.TextColumn("Player Name"),
+            "Model_Score": st.column_config.NumberColumn("Net Sentiment Score", format="%.3f")
+        }
+    )
 
 # ==========================================
 # 🎯 TAB 5: CONCLUSION
