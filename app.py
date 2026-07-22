@@ -353,39 +353,51 @@ with tab4:
     # 1. Methodology Write-up
     st.markdown("""
         ### How the Model Works
-        This module utilizes a **Natural Language Processing (NLP)** pipeline designed to quantify historical and media-driven perception of NBA players. 
+        This module utilizes a **Deep Learning NLP Pipeline** powered by a **RoBERTa Transformer** to quantify historical and media-driven perception of NBA players. 
         
-        *   **Data Ingestion:** We scrape articles and media commentary related to individual players to build a corpus of text.
-        *   **Sentiment Extraction:** The model evaluates the text for specific dimensions:
-            *   **Respect Metrics:** Detecting language patterns regarding career achievements.
-            *   **Failings/Narrative:** Identifying critiques or negative framing.
-            *   **Attitude/Sentiment:** Scoring for positive vs. negative tone.
-        *   **Regressor Integration:** The derived sentiment scores are normalized and combined with career advanced statistics (PER, BPM, Win Shares) as features for a **Gradient Boosting Regressor** pipeline.
+        *   **Data Ingestion:** We scrape career biographies and media commentary related to individual players to build a dense corpus of text.
+        *   **Semantic Vectorization:** Instead of basic keyword matching, the model converts text into semantic embeddings, mapping the context against specific narrative dimensions using cosine similarity:
+            *   **Respect Metrics:** Detecting language patterns regarding career achievements and elite status.
+            *   **Failings/Narrative:** Identifying critiques, flaws, or negative media framing.
+            *   **Attitude/Sentiment:** Scoring for positive leadership tone vs. toxic/negative behavior.
+        *   **Net Sentiment Calculation:** The overall narrative score is mathematically derived as `(Respect + Positive) - (Failings + Negative)`.
+        *   **Regressor Integration:** These derived sentiment vectors are combined with career advanced statistics (PER, BPM, Win Shares) as features for a **Gradient Boosting Regressor** pipeline.
         *   **Final Ranking:** The output score represents a synthesis of objective statistical performance and subjective media-driven "respect," creating a holistic view of a player's all-time ranking.
-        *   **Link to the scraped articles:**
-        [**View the Full Dataset**](https://github.com/Gotham2006/NBA_Top_100_Modeling/blob/main/NLP_Model/articles_credited.csv)
         """)
 
-    st.link_button("View Full Model Results", "https://github.com/Gotham2006/NBA_Top_100_Modeling/blob/main/NLP_Model/nlp_model_scores_ranked.csv")
+    # Side-by-side buttons for clean UI
+    col1, col2 = st.columns(2)
+    with col1:
+        st.link_button("View Full Model Results", "https://github.com/Gotham2006/NBA_Top_100_Modeling/blob/main/NLP_Model/nlp_model_scores_ranked.csv", use_container_width=True)
+    with col2:
+        st.link_button("View the Scraped Articles Dataset", "https://github.com/Gotham2006/NBA_Top_100_Modeling/blob/main/NLP_Model/articles_credited.csv", use_container_width=True)
 
-    # 2. Data Definition
-    nlp_data = {
-        "Rank": [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18],
-        "Player_Name": [
-            "Michael Jordan", "LeBron James", "Kobe Bryant", "Shaquille O'Neal", 
-            "Kareem Abdul-Jabbar", "Larry Bird", "Tim Duncan", "Karl Malone", 
-            "Kevin Durant", "Hakeem Olajuwon", "Magic Johnson", "Giannis Antetokounmpo", 
-            "Nikola Jokic", "Stephen Curry", "Dirk Nowitzki", "Charles Barkley", 
-            "James Harden", "Allen Iverson"
-        ],
-        "Model_Score": [3.463, 4.187, 4.63, 5.073, 4.833, 5.272, 5.359, 2.522, 4.706, 5.059, 2.343, 5.45, 7.439, 4.563, 7.179, 1.507, -0.799, 3.689]
-    }
-    
-    df_nlp = pd.DataFrame(nlp_data)
-    
-    # 3. Display Table
+    st.divider()
+
+    # 2. Data Loading & Display Table
     st.subheader("Model Scores by Player")
-    st.dataframe(df_nlp.sort_values(by="Model_Score", ascending=False), use_container_width=True, hide_index=True)
+    
+    try:
+        # Dynamically load the generated CSV (Adjust the file path if your CSV is in a specific folder like 'NLP_Model/')
+        df_nlp = pd.read_csv("nlp_model_scores_ranked.csv")
+        
+        # Display the dataframe with clean column formatting for your new specific metrics
+        st.dataframe(
+            df_nlp, 
+            use_container_width=True, 
+            hide_index=True,
+            column_config={
+                "Overall_NLP_Score": st.column_config.NumberColumn("Net Score", format="%.3f"),
+                "Respect_Score": st.column_config.NumberColumn("Respect", format="%.2f"),
+                "Failings_Score": st.column_config.NumberColumn("Failings", format="%.2f"),
+                "Positive_Attitude_Score": st.column_config.NumberColumn("Positive", format="%.2f"),
+                "Negative_Attitude_Score": st.column_config.NumberColumn("Negative", format="%.2f"),
+                "Context_Length": st.column_config.NumberColumn("Text Length")
+            }
+        )
+    except FileNotFoundError:
+        st.error("⚠️ 'nlp_model_scores_ranked.csv' not found. Please ensure the path is correct and the file is pushed to GitHub.")
+
 # ==========================================
 # 🎯 TAB 5: CONCLUSION
 # ==========================================
